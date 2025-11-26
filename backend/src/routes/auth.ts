@@ -1,5 +1,6 @@
 import { Router } from 'express';
-import { register, login, refresh } from '../controllers/authController';
+import { register, login, refresh, logout } from '../controllers/authController';
+import { authenticateToken } from '../middleware/auth';
 import { body } from 'express-validator';
 
 const router = Router();
@@ -32,6 +33,13 @@ router.post(
     body('refreshToken').exists().isString()
   ],
   refresh
+);
+
+// POST /api/auth/logout
+router.post(
+  '/logout',
+  authenticateToken,  // Require authentication
+  logout
 );
 
 export default router;

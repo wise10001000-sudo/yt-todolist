@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { dbPool } from '../database';
-import { hashPassword, generateAccessToken, generateRefreshToken, verifyPassword, verifyRefreshToken } from '../utils/auth';
+import { hashPassword, generateAccessToken, generateRefreshToken, verifyPassword, verifyRefreshToken, verifyAccessToken } from '../utils/auth';
 import { sendSuccess, sendError } from '../utils/response';
 import { env } from '../config/env';
 
@@ -230,5 +230,41 @@ export const refresh = async (req: Request, res: Response): Promise<void> => {
   } catch (error) {
     console.error('Refresh token error:', error);
     sendError(res, 'REFRESH_ERROR', 'An error occurred during token refresh', 500);
+  }
+};
+
+export const logout = async (req: Request, res: Response): Promise<void> => {
+  try {
+    // Extract the token from the Authorization header
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+
+    if (!token) {
+      sendError(res, 'NO_TOKEN', 'Access token is required', 401);
+      return;
+    }
+
+    // Verify the access token to get user info
+    const decoded = verifyAccessToken(token);
+
+    if (!decoded) {
+      sendError(res, 'INVALID_TOKEN', 'Invalid or expired access token', 401);
+      return;
+    }
+
+    const userId = decoded.userId;
+
+    // Delete the refresh token associated with this user from the database
+    // This will invalidate the refresh token, preventing future token refreshes
+    const deleteRefreshTokenQuery = 'DELETE FROM refresh_tokens WHERE user_id = $1';
+    await dbPool.query(deleteRefreshTokenQuery, [userId]);
+
+    // Return success response
+    sendSuccess(res, {
+      message: '로그아웃되었습니다.'
+    }, 200);
+  } catch (error) {
+    console.error('Logout error:', error);
+    sendError(res, 'LOGOUT_ERROR', 'An error occurred during logout', 500);
   }
 };
