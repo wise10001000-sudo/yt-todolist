@@ -293,4 +293,129 @@ describe('Auth Controller', () => {
         .expect(500);
     });
   });
+
+  describe('POST /api/auth/refresh', () => {
+    const refreshEndpoint = '/api/auth/refresh';
+
+    it('should return new access token with valid refresh token', async () => {
+      const mockRefreshToken = 'header.payload.signature';
+      const mockUserId = '123';
+      const mockUserEmail = 'test@example.com';
+      const mockAccessToken = 'new_access_token';
+
+      // Mock finding the refresh token in the DB
+      mockQuery.mockResolvedValueOnce({
+        rows: [{ id: 'token_id', user_id: mockUserId }]
+      });
+
+      // Mock verifying the refresh token
+      jest.spyOn(require('../../utils/auth'), 'verifyRefreshToken')
+        .mockReturnValue({ userId: mockUserId });
+
+      // Mock finding the user
+      mockQuery.mockResolvedValueOnce({
+        rows: [{ id: mockUserId, email: mockUserEmail }]
+      });
+
+      // Mock generating new access token
+      jest.spyOn(require('../../utils/auth'), 'generateAccessToken')
+        .mockReturnValue(mockAccessToken);
+
+      const response = await request(app)
+        .post(refreshEndpoint)
+        .send({ refreshToken: mockRefreshToken })
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.data).toHaveProperty('accessToken');
+      expect(response.body.data.accessToken).toBe(mockAccessToken);
+    });
+
+    it('should return 401 if no refresh token provided', async () => {
+      await request(app)
+        .post(refreshEndpoint)
+        .send({})
+        .expect(401);
+    });
+
+    it('should return 401 if refresh token has invalid format', async () => {
+      await request(app)
+        .post(refreshEndpoint)
+        .send({ refreshToken: 'invalid_format' })
+        .expect(401);
+    });
+
+    it('should return 401 if refresh token does not exist in DB', async () => {
+      const invalidToken = 'invalid_refresh_token';
+
+      // Mock no refresh token found in DB
+      mockQuery.mockResolvedValueOnce({ rows: [] });
+
+      await request(app)
+        .post(refreshEndpoint)
+        .send({ refreshToken: invalidToken })
+        .expect(401);
+    });
+
+    it('should return 401 if refresh token is expired/invalid', async () => {
+      const invalidToken = 'invalid_token';
+      const mockTokenId = 'token_id';
+      const mockUserId = '123';
+
+      // Mock token exists in DB
+      mockQuery.mockResolvedValueOnce({
+        rows: [{ id: mockTokenId, user_id: mockUserId }]
+      });
+
+      // Mock refresh token verification failure
+      jest.spyOn(require('../../utils/auth'), 'verifyRefreshToken')
+        .mockReturnValue(null);
+
+      // Mock deletion of invalid token
+      mockQuery.mockResolvedValueOnce({ rows: [] });
+
+      await request(app)
+        .post(refreshEndpoint)
+        .send({ refreshToken: invalidToken })
+        .expect(401);
+    });
+
+    it('should return 401 if user associated with refresh token does not exist', async () => {
+      const mockRefreshToken = 'valid_refresh_token';
+      const mockUserId = 'nonexistent_user_id';
+      const mockTokenId = 'token_id';
+
+      // Mock finding the refresh token in the DB
+      mockQuery.mockResolvedValueOnce({
+        rows: [{ id: mockTokenId, user_id: mockUserId }]
+      });
+
+      // Mock verifying the refresh token
+      jest.spyOn(require('../../utils/auth'), 'verifyRefreshToken')
+        .mockReturnValue({ userId: mockUserId });
+
+      // Mock no user found
+      mockQuery.mockResolvedValueOnce({ rows: [] });
+
+      // Mock deletion of the token
+      mockQuery.mockResolvedValueOnce({ rows: [] });
+
+      await request(app)
+        .post(refreshEndpoint)
+        .send({ refreshToken: mockRefreshToken })
+        .expect(401);
+    });
+
+    it('should handle database errors during refresh', async () => {
+      const mockRefreshToken = 'header.payload.signature';  // Valid format to pass initial validation
+
+      // Reset mock and set up the specific error scenario
+      mockQuery.mockImplementationOnce(() => Promise.reject(new Error('Database error')));
+
+      await request(app)
+        .post(refreshEndpoint)
+        .send({ refreshToken: mockRefreshToken })
+        .expect(500);
+    });
+  });
 });
