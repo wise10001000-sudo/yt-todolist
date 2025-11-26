@@ -157,5 +157,140 @@ describe('Auth Controller', () => {
         .send(newUser)
         .expect(500);
     });
+
+    it('should handle database errors during registration', async () => {
+      const newUser = {
+        email: 'error@example.com',
+        password: 'Password123!',
+        username: 'Error User'
+      };
+
+      // Mock the first query (check for existing user) to succeed
+      mockQuery.mockResolvedValueOnce({ rows: [] });
+      // Mock password hashing
+      jest.spyOn(require('../../utils/auth'), 'hashPassword').mockResolvedValue('hashed_password');
+      // Mock the second query (insert user) to fail
+      mockQuery.mockRejectedValueOnce(new Error('Database error'));
+
+      await request(app)
+        .post(registerEndpoint)
+        .send(newUser)
+        .expect(500);
+    });
+  });
+
+  describe('POST /api/auth/login', () => {
+    const loginEndpoint = '/api/auth/login';
+
+    it('should successfully login a user with valid credentials', async () => {
+      const existingUser = {
+        id: '550e8400-e29b-41d4-a716-446655440000',
+        email: 'test@example.com',
+        password: 'Password123!',
+        username: 'Test User',
+        password_hash: 'hashed_password'
+      };
+
+      // Mock user found in database
+      mockQuery.mockResolvedValueOnce({ rows: [existingUser] });
+      // Mock successful password verification
+      jest.spyOn(require('../../utils/auth'), 'verifyPassword').mockResolvedValue(true);
+      // Mock token generation
+      jest.spyOn(require('../../utils/auth'), 'generateAccessToken').mockReturnValue('access_token');
+      jest.spyOn(require('../../utils/auth'), 'generateRefreshToken').mockReturnValue('refresh_token');
+      // Mock storing refresh token in database
+      mockQuery.mockResolvedValueOnce({ rows: [{ id: 'refresh_token_id' }] });
+
+      const response = await request(app)
+        .post(loginEndpoint)
+        .send({
+          email: existingUser.email,
+          password: existingUser.password
+        })
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.data).toHaveProperty('accessToken');
+      expect(response.body.data).toHaveProperty('refreshToken');
+      expect(response.body.data.user).toHaveProperty('id');
+      expect(response.body.data.user.email).toBe(existingUser.email);
+      expect(response.body.data.user.username).toBe(existingUser.username);
+    });
+
+    it('should return 401 for invalid email', async () => {
+      // Mock no user found in database
+      mockQuery.mockResolvedValueOnce({ rows: [] });
+
+      await request(app)
+        .post(loginEndpoint)
+        .send({
+          email: 'nonexistent@example.com',
+          password: 'Password123!'
+        })
+        .expect(401);
+    });
+
+    it('should return 401 for invalid password', async () => {
+      const existingUser = {
+        id: '550e8400-e29b-41d4-a716-446655440000',
+        email: 'test@example.com',
+        password: 'Password123!',
+        username: 'Test User',
+        password_hash: 'hashed_password'
+      };
+
+      // Mock user found in database
+      mockQuery.mockResolvedValueOnce({ rows: [existingUser] });
+      // Mock failed password verification
+      jest.spyOn(require('../../utils/auth'), 'verifyPassword').mockResolvedValue(false);
+
+      await request(app)
+        .post(loginEndpoint)
+        .send({
+          email: existingUser.email,
+          password: 'WrongPassword123!'
+        })
+        .expect(401);
+    });
+
+    it('should return 400 for missing email or password', async () => {
+      // Test missing email
+      await request(app)
+        .post(loginEndpoint)
+        .send({ password: 'Password123!' })
+        .expect(400);
+
+      // Test missing password
+      await request(app)
+        .post(loginEndpoint)
+        .send({ email: 'test@example.com' })
+        .expect(400);
+
+      // Test missing both
+      await request(app)
+        .post(loginEndpoint)
+        .send({})
+        .expect(400);
+    });
+
+    it('should return 400 for invalid email format', async () => {
+      await request(app)
+        .post(loginEndpoint)
+        .send({ email: 'invalid-email', password: 'Password123!' })
+        .expect(400);
+    });
+
+    it('should handle database errors during login', async () => {
+      // Mock database error when finding user
+      mockQuery.mockRejectedValueOnce(new Error('Database error'));
+
+      await request(app)
+        .post(loginEndpoint)
+        .send({
+          email: 'test@example.com',
+          password: 'Password123!'
+        })
+        .expect(500);
+    });
   });
 });

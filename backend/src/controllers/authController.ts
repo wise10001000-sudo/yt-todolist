@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
 import { dbPool } from '../database';
-import { hashPassword } from '../utils/auth';
+import { hashPassword, generateAccessToken, generateRefreshToken, verifyPassword } from '../utils/auth';
 import { sendSuccess, sendError } from '../utils/response';
+import { env } from '../config/env';
 
 export const register = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -72,7 +73,98 @@ export const register = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-export const login = async (_req: Request, res: Response): Promise<void> => {
-  // Implementation will be added in Backend-06
-  sendError(res, 'NOT_IMPLEMENTED', 'Login functionality not yet implemented', 501);
+export const login = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { email, password } = req.body;
+
+    // Input validation
+    if (!email || !password) {
+      sendError(res, 'VALIDATION_ERROR', 'Email and password are required', 400);
+      return;
+    }
+
+    // Basic email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      sendError(res, 'INVALID_EMAIL', 'Invalid email format', 400);
+      return;
+    }
+
+    // Find user by email
+    const findUserQuery = 'SELECT id, email, username, password_hash FROM users WHERE email = $1';
+    const result = await dbPool.query(findUserQuery, [email]);
+
+    if (result.rows.length === 0) {
+      // To prevent user enumeration, use the same error message
+      sendError(res, 'AUTHENTICATION_FAILED', 'Invalid email or password', 401);
+      return;
+    }
+
+    const user = result.rows[0];
+
+    // Verify password
+    const isPasswordValid = await verifyPassword(password, user.password_hash);
+
+    if (!isPasswordValid) {
+      sendError(res, 'AUTHENTICATION_FAILED', 'Invalid email or password', 401);
+      return;
+    }
+
+    // Generate tokens
+    const accessToken = generateAccessToken({ userId: user.id, email: user.email });
+    const refreshToken = generateRefreshToken({ userId: user.id });
+
+    // Calculate expiration time based on JWT_REFRESH_EXPIRES_IN
+    // The format is typically like '7d' for 7 days, '30m' for 30 minutes, etc.
+    const expiresAt = calculateExpirationDate(env.JWT_REFRESH_EXPIRES_IN);
+
+    // Store refresh token in database
+    const storeRefreshTokenQuery = `
+      INSERT INTO refresh_tokens (user_id, token, expires_at)
+      VALUES ($1, $2, $3)
+      RETURNING id
+    `;
+    await dbPool.query(storeRefreshTokenQuery, [user.id, refreshToken, expiresAt]);
+
+    // Return successful login response
+    sendSuccess(res, {
+      accessToken,
+      refreshToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.username
+      }
+    }, 200);
+  } catch (error) {
+    console.error('Login error:', error);
+    sendError(res, 'LOGIN_ERROR', 'An error occurred during login', 500);
+  }
+};
+
+/**
+ * Calculate expiration date based on JWT expiration string (e.g., '7d', '30m', '24h')
+ * @param expiresIn - Expiration string in format like '7d', '30m', '24h'
+ * @returns Expiration date as Date object
+ */
+const calculateExpirationDate = (expiresIn: string): Date => {
+  const now = new Date();
+  const value = parseInt(expiresIn.match(/\d+/)?.[0] || '0', 10);
+  const unit = expiresIn.match(/[a-z]+/i)?.[0] || '';
+
+  switch (unit.toLowerCase()) {
+    case 's': // seconds
+      return new Date(now.getTime() + value * 1000);
+    case 'm': // minutes
+      return new Date(now.getTime() + value * 60 * 1000);
+    case 'h': // hours
+      return new Date(now.getTime() + value * 60 * 60 * 1000);
+    case 'd': // days
+      return new Date(now.getTime() + value * 24 * 60 * 60 * 1000);
+    case 'w': // weeks
+      return new Date(now.getTime() + value * 7 * 24 * 60 * 60 * 1000);
+    default:
+      // Default to 7 days if format is unknown
+      return new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+  }
 };
