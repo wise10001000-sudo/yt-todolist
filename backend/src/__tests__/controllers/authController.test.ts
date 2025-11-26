@@ -418,4 +418,70 @@ describe('Auth Controller', () => {
         .expect(500);
     });
   });
+
+  describe('POST /api/auth/logout', () => {
+    const logoutEndpoint = '/api/auth/logout';
+
+    it('should successfully logout a user and delete refresh token', async () => {
+      const mockUserId = '123';
+      const mockAccessToken = 'valid_access_token';
+
+      // Mock access token verification
+      jest.spyOn(require('../../utils/auth'), 'verifyAccessToken')
+        .mockReturnValue({ userId: mockUserId, email: 'test@example.com' });
+
+      // Mock deletion of refresh tokens
+      mockQuery.mockResolvedValueOnce({ rowCount: 1 });
+
+      const response = await request(app)
+        .post(logoutEndpoint)
+        .set('Authorization', `Bearer ${mockAccessToken}`)
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.message).toBe('로그아웃되었습니다.');
+
+      // Verify the DB query was called to delete refresh tokens
+      expect(mockQuery).toHaveBeenCalledWith(
+        'DELETE FROM refresh_tokens WHERE user_id = $1',
+        [mockUserId]
+      );
+    });
+
+    it('should return 401 if no authorization header is provided', async () => {
+      await request(app)
+        .post(logoutEndpoint)
+        .expect(401);
+    });
+
+    it('should return 401 if invalid access token is provided', async () => {
+      const invalidToken = 'invalid_token';
+
+      // Mock access token verification failure
+      jest.spyOn(require('../../utils/auth'), 'verifyAccessToken')
+        .mockReturnValue(null);
+
+      await request(app)
+        .post(logoutEndpoint)
+        .set('Authorization', `Bearer ${invalidToken}`)
+        .expect(401);
+    });
+
+    it('should handle database errors during logout', async () => {
+      const mockUserId = '123';
+      const mockAccessToken = 'valid_access_token';
+
+      // Mock access token verification
+      jest.spyOn(require('../../utils/auth'), 'verifyAccessToken')
+        .mockReturnValue({ userId: mockUserId, email: 'test@example.com' });
+
+      // Mock database error during refresh token deletion
+      mockQuery.mockRejectedValueOnce(new Error('Database error'));
+
+      await request(app)
+        .post(logoutEndpoint)
+        .set('Authorization', `Bearer ${mockAccessToken}`)
+        .expect(500);
+    });
+  });
 });
