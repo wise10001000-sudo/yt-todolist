@@ -1,7 +1,17 @@
 import request from 'supertest';
 import app from '../app';
+import { isDatabaseHealthy } from '../database/health';
+
+// Mock the database health check function
+jest.mock('../database/health', () => ({
+  isDatabaseHealthy: jest.fn(),
+}));
 
 describe('Basic Express App Tests', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   describe('GET /api', () => {
     it('should return Hello World message', async () => {
       const response = await request(app).get('/api');
@@ -15,6 +25,8 @@ describe('Basic Express App Tests', () => {
 
   describe('GET /api/health', () => {
     it('should return health check status', async () => {
+      (isDatabaseHealthy as jest.MockedFunction<typeof isDatabaseHealthy>).mockResolvedValue(true);
+
       const response = await request(app).get('/api/health');
 
       expect(response.status).toBe(200);
@@ -24,7 +36,21 @@ describe('Basic Express App Tests', () => {
       expect(response.body.data).toHaveProperty('timestamp');
     });
 
+    it('should return 503 when database is not healthy', async () => {
+      (isDatabaseHealthy as jest.MockedFunction<typeof isDatabaseHealthy>).mockResolvedValue(false);
+
+      const response = await request(app).get('/api/health');
+
+      expect(response.status).toBe(503);
+      expect(response.body).toHaveProperty('success', true);
+      expect(response.body.data).toHaveProperty('status', 'ok');
+      expect(response.body.data).toHaveProperty('message', 'Server is running');
+      expect(response.body.data).toHaveProperty('timestamp');
+    });
+
     it('should return ISO timestamp', async () => {
+      (isDatabaseHealthy as jest.MockedFunction<typeof isDatabaseHealthy>).mockResolvedValue(true);
+
       const response = await request(app).get('/api/health');
 
       const timestamp = response.body.data.timestamp;
