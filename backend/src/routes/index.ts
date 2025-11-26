@@ -2,11 +2,15 @@ import { Router, Request, Response } from 'express';
 import { sendSuccess } from '../utils/response';
 import { isDatabaseHealthy } from '../database/health';
 import authRoutes from './auth';
+import todoRoutes from './todos';
 
 const router = Router();
 
 // Auth routes
 router.use('/auth', authRoutes);
+
+// Todo routes
+router.use('/todos', todoRoutes);
 
 // Health check endpoint
 router.get('/health', async (_req: Request, res: Response) => {
