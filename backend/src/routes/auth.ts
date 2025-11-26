@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { register, login } from '../controllers/authController';
+import { register, login, refresh } from '../controllers/authController';
 import { body } from 'express-validator';
 
 const router = Router();
@@ -23,6 +23,15 @@ router.post(
     body('password').exists()
   ],
   login
+);
+
+// POST /api/auth/refresh
+router.post(
+  '/refresh',
+  [
+    body('refreshToken').exists().isString()
+  ],
+  refresh
 );
 
 export default router;

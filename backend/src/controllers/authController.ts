@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { dbPool } from '../database';
-import { hashPassword, generateAccessToken, generateRefreshToken, verifyPassword } from '../utils/auth';
+import { hashPassword, generateAccessToken, generateRefreshToken, verifyPassword, verifyRefreshToken } from '../utils/auth';
 import { sendSuccess, sendError } from '../utils/response';
 import { env } from '../config/env';
 
@@ -166,5 +166,69 @@ const calculateExpirationDate = (expiresIn: string): Date => {
     default:
       // Default to 7 days if format is unknown
       return new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+  }
+};
+
+export const refresh = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { refreshToken } = req.body;
+
+    // Validate input
+    if (!refreshToken) {
+      sendError(res, 'NO_REFRESH_TOKEN', 'Refresh token is required', 401);
+      return;
+    }
+
+    // Verify the refresh token format first (check if it's a valid JWT structure)
+    if (typeof refreshToken !== 'string' || !refreshToken.includes('.')) {
+      sendError(res, 'INVALID_REFRESH_TOKEN', 'Invalid refresh token format', 401);
+      return;
+    }
+
+    // Check if the refresh token exists in the database
+    const findRefreshTokenQuery = 'SELECT id, user_id FROM refresh_tokens WHERE token = $1';
+    const tokenResult = await dbPool.query(findRefreshTokenQuery, [refreshToken]);
+
+    if (tokenResult.rows.length === 0) {
+      sendError(res, 'INVALID_REFRESH_TOKEN', 'Invalid or expired refresh token', 401);
+      return;
+    }
+
+    const tokenRecord = tokenResult.rows[0];
+
+    // Verify the refresh token using the auth utility
+    const decoded = verifyRefreshToken(refreshToken);
+
+    if (!decoded) {
+      // Token is invalid or expired, remove it from the database
+      await dbPool.query('DELETE FROM refresh_tokens WHERE id = $1', [tokenRecord.id]);
+      sendError(res, 'INVALID_REFRESH_TOKEN', 'Invalid or expired refresh token', 401);
+      return;
+    }
+
+    // Get user info to generate new access token
+    const findUserQuery = 'SELECT id, email FROM users WHERE id = $1';
+    const userResult = await dbPool.query(findUserQuery, [tokenRecord.user_id]);
+
+    if (userResult.rows.length === 0) {
+      // If user doesn't exist anymore, remove the token
+      await dbPool.query('DELETE FROM refresh_tokens WHERE id = $1', [tokenRecord.id]);
+      sendError(res, 'INVALID_REFRESH_TOKEN', 'Invalid refresh token', 401);
+      return;
+    }
+
+    const user = userResult.rows[0];
+
+    // Generate new access token
+    const newAccessToken = generateAccessToken({ userId: user.id, email: user.email });
+
+    // Return the new access token
+    sendSuccess(res, {
+      accessToken: newAccessToken
+    }, 200);
+
+  } catch (error) {
+    console.error('Refresh token error:', error);
+    sendError(res, 'REFRESH_ERROR', 'An error occurred during token refresh', 500);
   }
 };
