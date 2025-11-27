@@ -1,7 +1,10 @@
 import express, { Application } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import swaggerUi from 'swagger-ui-express';
+import swaggerJsdoc from 'swagger-jsdoc';
 import { env } from './config/env';
+import swaggerDef from './config/swaggerDef';
 import routes from './routes';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 
@@ -27,6 +30,14 @@ app.use((req, _res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
   next();
 });
+
+// Swagger setup
+const options = {
+  swaggerDefinition: swaggerDef,
+  apis: ['./src/routes/*.ts', './src/controllers/*.ts'], // files containing OpenAPI definitions
+};
+const specs = swaggerJsdoc(options);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
 // Routes
 app.use('/api', routes);

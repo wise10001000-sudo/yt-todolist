@@ -481,13 +481,12 @@
 
 #### Frontend-01: 프로젝트 초기 설정 및 환경 구성
 
-**설명**: React + TypeScript + Vite 기반 프로젝트 초기화
+**설명**: React + Vite 기반 프로젝트 초기화
 
 **완료 조건**:
 
 - [ ] `npm run dev`로 개발 서버 정상 실행
 - [ ] ESLint, Prettier 검증 통과
-- [ ] TypeScript 컴파일 에러 없음
 - [ ] 환경 변수 로드 확인
 - [ ] 폴더 구조 설정 완료
 

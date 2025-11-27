@@ -118,3 +118,86 @@ desktop.ini
 config/secrets.yml
 secrets/
 credentials.json
+*.key
+*.pem
+*.p12
+*.pfx
+*.cert
+*.crt
+id_rsa*
+id_ed25519*
+*.gpg
+.ssh/
+
+# MCP and AI tool configurations (may contain API keys)
+.mcp*.json
+*.mcp.json
+
+# AI assistant configurations
+.gemini/
+.qwen/
+.claude/
+.cursor/
+.windsurf/
+.cline/
+.aider/
+.continue/
+commands/
+
+# Backend specific
+backend/.env*
+backend/uploads/
+backend/logs/
+backend/database.sqlite
+backend/database.sqlite-*
+backend/dist/
+backend/build/
+
+# Frontend specific
+frontend/.env*
+frontend/build/
+frontend/dist/
+frontend/.vite/
+frontend/vite.config.ts.timestamp-*
+
+# Package manager files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+.pnpm-store/
+
+# Backup and dump files
+*.sql
+*.dump
+*.backup
+*.bak
+*.old
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+*.dockerignore
+
+# CI/CD sensitive data
+.github/workflows/secrets.yml
+.gitlab-ci-local/
+
+# Windows specific
+nul
+null
+
+# MacOS specific
+*.DS_Store
+.AppleDouble
+.LSOverride
+
+# Swagger/OpenAPI generated files
+swagger/swagger.json
+swagger/swagger.yaml
+
+# Test artifacts
+test-results/
+screenshots/
+videos/
+playwright-report/
+playwright/.cache/
