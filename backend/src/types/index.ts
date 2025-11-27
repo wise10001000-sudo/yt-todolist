@@ -8,6 +8,27 @@ export interface ApiResponse<T = any> {
   };
 }
 
+// Domain types
+export interface ITodo {
+  id: string;
+  title: string;
+  content: string | null;
+  startDate: string | null;
+  endDate: string;
+  status: 'active' | 'trash';
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string | null;
+}
+
+export interface IPagination {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+
 // Environment configuration type
 export interface EnvConfig {
   NODE_ENV: string;
