@@ -141,6 +141,7 @@ erDiagram
 - `idx_todos_status`: status 컬럼 인덱스 (active/trash 필터링)
 - `idx_todos_end_date`: end_date 컬럼 인덱스 (날짜 범위 조회)
 - `idx_todos_deleted_at`: deleted_at 컬럼 부분 인덱스 (WHERE status = 'trash')
+- `idx_todos_user_status`: (user_id, status) 복합 인덱스 (사용자별 활성 할일 조회 최적화)
 
 **트리거:**
 - `update_todos_updated_at`: UPDATE 시 updated_at 자동 갱신
@@ -258,6 +259,7 @@ JWT Refresh Token을 관리하는 테이블입니다.
 | todos | idx_todos_status | status | active/trash 필터링 |
 | todos | idx_todos_end_date | end_date | 날짜 범위 조회 및 정렬 |
 | todos | idx_todos_deleted_at | deleted_at (WHERE status='trash') | 휴지통 항목 조회 |
+| todos | idx_todos_user_status | user_id, status | 사용자별 활성 할일 조회 최적화 (복합 인덱스) |
 | public_holidays | idx_holidays_date | holiday_date | 날짜 범위 조회 |
 | public_holidays | idx_holidays_type | type | 유형별 필터링 |
 | refresh_tokens | idx_refresh_tokens_user_id | user_id | 사용자별 토큰 조회 |
@@ -273,7 +275,7 @@ SELECT * FROM users WHERE email = 'user@example.com';
 
 -- todos 테이블: 사용자별 활성 할일 조회
 SELECT * FROM todos WHERE user_id = '...' AND status = 'active';
--- → idx_todos_user_id, idx_todos_status 사용
+-- → idx_todos_user_status 사용 (복합 인덱스로 최적화됨)
 
 -- todos 테이블: 날짜 범위로 할일 조회
 SELECT * FROM todos

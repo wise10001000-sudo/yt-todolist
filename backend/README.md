@@ -2,7 +2,7 @@
 
 Backend API server for yt-todolist application built with Node.js, Express, and TypeScript.
 
-## Prerequisites
+## Prerequisites 수정됨
 
 - Node.js 20 LTS or higher
 - PostgreSQL 16
@@ -13,16 +13,19 @@ Backend API server for yt-todolist application built with Node.js, Express, and 
 ### Installation
 
 1. Install dependencies:
+
 ```bash
 npm install
 ```
 
 2. Set up environment variables:
+
 ```bash
 cp .env.example .env
 ```
 
 Edit `.env` file with your configuration:
+
 - Database credentials
 - JWT secrets (change in production!)
 - CORS origin
@@ -31,6 +34,7 @@ Edit `.env` file with your configuration:
 ### Development
 
 Start the development server with hot reload:
+
 ```bash
 npm run dev
 ```
@@ -40,6 +44,7 @@ The server will start on `http://localhost:3000` (or the PORT specified in .env)
 ### Building
 
 Compile TypeScript to JavaScript:
+
 ```bash
 npm run build
 ```
@@ -47,6 +52,7 @@ npm run build
 ### Production
 
 Run the compiled JavaScript:
+
 ```bash
 npm start
 ```
@@ -54,21 +60,25 @@ npm start
 ### Code Quality
 
 Run ESLint:
+
 ```bash
 npm run lint
 ```
 
 Auto-fix ESLint issues:
+
 ```bash
 npm run lint:fix
 ```
 
 Check code formatting with Prettier:
+
 ```bash
 npm run format:check
 ```
 
 Format code with Prettier:
+
 ```bash
 npm run format
 ```
@@ -97,27 +107,29 @@ backend/
 ## API Endpoints
 
 ### Health Check
+
 - `GET /api/health` - Server health check
 
 ### Root
+
 - `GET /api/` - Hello World endpoint
 
 ## Environment Variables
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `NODE_ENV` | Environment (development/production) | development |
-| `PORT` | Server port | 3000 |
-| `DB_HOST` | PostgreSQL host | localhost |
-| `DB_PORT` | PostgreSQL port | 5432 |
-| `DB_NAME` | Database name | yt_todolist |
-| `DB_USER` | Database user | postgres |
-| `DB_PASSWORD` | Database password | (empty) |
-| `JWT_ACCESS_SECRET` | JWT access token secret | (change in production) |
-| `JWT_REFRESH_SECRET` | JWT refresh token secret | (change in production) |
-| `JWT_ACCESS_EXPIRES_IN` | Access token expiration | 15m |
-| `JWT_REFRESH_EXPIRES_IN` | Refresh token expiration | 7d |
-| `CORS_ORIGIN` | Allowed CORS origin | http://localhost:5173 |
+| Variable                 | Description                          | Default                |
+| ------------------------ | ------------------------------------ | ---------------------- |
+| `NODE_ENV`               | Environment (development/production) | development            |
+| `PORT`                   | Server port                          | 3000                   |
+| `DB_HOST`                | PostgreSQL host                      | localhost              |
+| `DB_PORT`                | PostgreSQL port                      | 5432                   |
+| `DB_NAME`                | Database name                        | yt_todolist            |
+| `DB_USER`                | Database user                        | postgres               |
+| `DB_PASSWORD`            | Database password                    | (empty)                |
+| `JWT_ACCESS_SECRET`      | JWT access token secret              | (change in production) |
+| `JWT_REFRESH_SECRET`     | JWT refresh token secret             | (change in production) |
+| `JWT_ACCESS_EXPIRES_IN`  | Access token expiration              | 15m                    |
+| `JWT_REFRESH_EXPIRES_IN` | Refresh token expiration             | 7d                     |
+| `CORS_ORIGIN`            | Allowed CORS origin                  | http://localhost:5173  |
 
 ## Tech Stack
 
