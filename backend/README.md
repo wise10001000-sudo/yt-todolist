@@ -116,20 +116,28 @@ backend/
 
 ## Environment Variables
 
-| Variable                 | Description                          | Default                |
-| ------------------------ | ------------------------------------ | ---------------------- |
-| `NODE_ENV`               | Environment (development/production) | development            |
-| `PORT`                   | Server port                          | 3000                   |
-| `DB_HOST`                | PostgreSQL host                      | localhost              |
-| `DB_PORT`                | PostgreSQL port                      | 5432                   |
-| `DB_NAME`                | Database name                        | yt_todolist            |
-| `DB_USER`                | Database user                        | postgres               |
-| `DB_PASSWORD`            | Database password                    | (empty)                |
-| `JWT_ACCESS_SECRET`      | JWT access token secret              | (change in production) |
-| `JWT_REFRESH_SECRET`     | JWT refresh token secret             | (change in production) |
-| `JWT_ACCESS_EXPIRES_IN`  | Access token expiration              | 15m                    |
-| `JWT_REFRESH_EXPIRES_IN` | Refresh token expiration             | 7d                     |
-| `CORS_ORIGIN`            | Allowed CORS origin                  | http://localhost:5173  |
+| Variable                 | Description                          | Default                                                    |
+| ------------------------ | ------------------------------------ | ---------------------------------------------------------- |
+| `NODE_ENV`               | Environment (development/production) | development                                                |
+| `PORT`                   | Server port                          | 3000                                                       |
+| `DATABASE_URL`           | PostgreSQL connection string         | postgresql://postgres:postgres@localhost:5432/yt_todolist  |
+| `JWT_ACCESS_SECRET`      | JWT access token secret              | (change in production)                                     |
+| `JWT_REFRESH_SECRET`     | JWT refresh token secret             | (change in production)                                     |
+| `JWT_ACCESS_EXPIRES_IN`  | Access token expiration              | 15m                                                        |
+| `JWT_REFRESH_EXPIRES_IN` | Refresh token expiration             | 7d                                                         |
+| `CORS_ORIGIN`            | Allowed CORS origin                  | http://localhost:5173                                      |
+
+### DATABASE_URL Format
+
+The `DATABASE_URL` follows the standard PostgreSQL connection string format:
+
+```
+postgresql://[user]:[password]@[host]:[port]/[database]
+```
+
+**Examples:**
+- Local: `postgresql://postgres:mypassword@localhost:5432/yt_todolist`
+- Supabase: `postgresql://postgres:[YOUR-PASSWORD]@db.[PROJECT-REF].supabase.co:5432/postgres`
 
 ## Tech Stack
 

@@ -3,11 +3,7 @@ import { env } from '../config/env';
 
 // Database connection pool configuration
 const poolConfig: PoolConfig = {
-  host: env.DB_HOST,
-  port: env.DB_PORT,
-  database: env.DB_NAME,
-  user: env.DB_USER,
-  password: env.DB_PASSWORD,
+  connectionString: env.DATABASE_URL,
   // Connection pool settings
   max: 20, // Maximum number of clients in the pool
   min: 5, // Minimum number of clients in the pool
