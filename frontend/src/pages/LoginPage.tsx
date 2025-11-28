@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Container,
   Box,
@@ -10,26 +10,26 @@ import {
   InputAdornment,
   FormControl,
   InputLabel,
-  OutlinedInput
-} from '@mui/material';
-import { Link as MuiLink } from '@mui/material';
-import { Visibility, VisibilityOff } from '@mui/icons-material';
-import { Link as RouterLink, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+  OutlinedInput,
+} from "@mui/material";
+import { Link as MuiLink } from "@mui/material";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
+import { Link as RouterLink, useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 const LoginPage: React.FC = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuth();
-  
+
   // Get the redirect URL from location state or default to dashboard
-  const from = (location.state as any)?.from?.pathname || '/dashboard';
+  const from = (location.state as any)?.from?.pathname || "/dashboard";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,7 +41,10 @@ const LoginPage: React.FC = () => {
       // After successful login, redirect to intended page
       navigate(from, { replace: true });
     } catch (err: any) {
-      setError(err.message || '로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.');
+      setError(
+        err.message ||
+          "로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요."
+      );
     } finally {
       setIsLoading(false);
     }
@@ -56,13 +59,13 @@ const LoginPage: React.FC = () => {
       <Box
         sx={{
           marginTop: 8,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
         }}
       >
         <Typography component="h1" variant="h5">
-          yt-todolist
+          할일목록 리스트
         </Typography>
         <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }}>
           <TextField
@@ -81,7 +84,7 @@ const LoginPage: React.FC = () => {
             <InputLabel htmlFor="password">비밀번호</InputLabel>
             <OutlinedInput
               id="password"
-              type={showPassword ? 'text' : 'password'}
+              type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               endAdornment={
@@ -110,7 +113,7 @@ const LoginPage: React.FC = () => {
             sx={{ mt: 3, mb: 2 }}
             disabled={isLoading}
           >
-            {isLoading ? '처리 중...' : '로그인'}
+            {isLoading ? "처리 중..." : "로그인"}
           </Button>
           <Box textAlign="center">
             <MuiLink component={RouterLink} to="/register" variant="body2">
